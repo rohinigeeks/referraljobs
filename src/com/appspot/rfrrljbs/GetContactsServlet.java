@@ -99,14 +99,9 @@ public class GetContactsServlet extends HttpServlet {
 		resp.sendRedirect("/UserContacts.jsp");*/
 } 
     
+    
+   
     public void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-    	 
-    		
-    		
-    }
-   
-   
-    public void doGet1(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
     	
     	try { //resp.getWriter().println(req.getQueryString());
     		
