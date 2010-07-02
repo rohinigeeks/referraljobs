@@ -206,7 +206,7 @@ public class GetContactsServlet extends HttpServlet {
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			resp.getWriter().println("<h1>JHAM HAS A NEW NAME</h1>");
-			resp.getWriter().println(e.toString());
+			e.printStackTrace(resp.getWriter());
 		}
 	}
 }
