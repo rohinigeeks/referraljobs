@@ -2,6 +2,7 @@ package com.appspot.rfrrljbs;
 
 import java.io.IOException;
 import javax.jdo.PersistenceManager;
+import javax.servlet.ServletException;
 import javax.servlet.http.*;
 import com.google.appengine.api.users.User;
 import com.google.appengine.api.users.UserService;
@@ -82,6 +83,7 @@ public class GetContactsServlet extends HttpServlet {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 				resp.sendRedirect("/");
+				resp.getWriter().println("getUnauthorizedRequestToken");
 			}
 		
 			// 2. Authorizing a request token
@@ -89,79 +91,97 @@ public class GetContactsServlet extends HttpServlet {
 			resp.sendRedirect(approvalPageUrl);
     	}
     	else {
-    		UserService userService = UserServiceFactory.getUserService();
-            User user = userService.getCurrentUser();
-            
-    		GoogleOAuthParameters oauthParameters = new GoogleOAuthParameters();
-    		oauthParameters.setOAuthConsumerKey(CONSUMER_KEY);
-    		oauthParameters.setOAuthConsumerSecret(CONSUMER_SECRET);
-
-    		GoogleOAuthHelper oauthHelper = new GoogleOAuthHelper(new OAuthHmacSha1Signer());
-    		oauthHelper.getOAuthParametersFromCallback(req.getQueryString(), oauthParameters);
-    		
-    		// 3. Upgrading to an access token
-    		String ACCESS_TOKEN=null;
-			try {
-				ACCESS_TOKEN = oauthHelper.getAccessToken(oauthParameters);
-			} catch (OAuthException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
-				resp.sendRedirect("/");
-			}    		
-
-    		String TOKEN_SECRET = oauthParameters.getOAuthTokenSecret();
-    		
-    		// 4. Using an access token
-    		GoogleOAuthParameters oauthParameters2 = new GoogleOAuthParameters();
-    		  oauthParameters2.setOAuthConsumerKey(CONSUMER_KEY);
-    		  oauthParameters2.setOAuthConsumerSecret(CONSUMER_SECRET);
-    		  oauthParameters2.setOAuthToken(ACCESS_TOKEN);
-    		  oauthParameters2.setOAuthTokenSecret(TOKEN_SECRET);
-    	
-    		//OAUTH DANCE HMAC-SHA1  END
-    		  
-    		ContactsService client = new ContactsService("referjobs-rfrrljbs-v2");
     		try {
-				client.setOAuthCredentials(oauthParameters2, new OAuthHmacSha1Signer());
-			} catch (OAuthException e) {				
-				e.printStackTrace();
-				resp.sendRedirect("/");
+				doGet(req,resp);
+			} catch (ServletException se) {
+				se.printStackTrace();
+				resp.getWriter().println("doGet");
 			}
-    		
-    		URL feedUrl = new URL(CONTACT_FEED_SCOPE + "contacts/" + user.getEmail() + "/full");
-    		ContactFeed resultFeed=null;
-    		try {
-				resultFeed = client.getFeed(feedUrl, ContactFeed.class);
-			} catch (ServiceException e) {				
-				e.printStackTrace();
-				resp.sendRedirect("/");
-			}
-    		if(resultFeed !=null){
-    			
-    			UserContacts userContacts = new UserContacts(user);
-    			
-    			for (int i = 0; i < resultFeed.getEntries().size(); i++) {    		        
-    				ContactEntry entry = resultFeed.getEntries().get(i);
-    				
-    				List<com.google.appengine.api.datastore.Email> userContactsEmail = new ArrayList<com.google.appengine.api.datastore.Email>();
-    				
-    				for (Email email : entry.getEmailAddresses()) {
-    					com.google.appengine.api.datastore.Email gaeDSEmail = new com.google.appengine.api.datastore.Email(email.getAddress());
-    					userContactsEmail.add(gaeDSEmail);
-    				}
-    				userContacts.setUserContacts(userContactsEmail);    				
-    	    		
-    	    		//Persist to GAE DataStore
-    		        PersistenceManager pm = PMF.get().getPersistenceManager();
-    		        try {
-    		            pm.makePersistent(userContacts);
-    		        } finally {
-    		            pm.close();
-    		        }
-    	        }
-    		}
-			
     	}//Is Post back from OAUTH user auth page 
+    	
         resp.sendRedirect("/UserContacts.jsp");
     }
+    
+    public void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+    	
+    	UserService userService = UserServiceFactory.getUserService();
+        User user = userService.getCurrentUser();
+        
+		GoogleOAuthParameters oauthParameters = new GoogleOAuthParameters();
+		oauthParameters.setOAuthConsumerKey(CONSUMER_KEY);
+		oauthParameters.setOAuthConsumerSecret(CONSUMER_SECRET);
+
+		GoogleOAuthHelper oauthHelper = new GoogleOAuthHelper(new OAuthHmacSha1Signer());
+		oauthHelper.getOAuthParametersFromCallback(req.getQueryString(), oauthParameters);
+		
+		// 3. Upgrading to an access token
+		String ACCESS_TOKEN=null;
+		try {
+			ACCESS_TOKEN = oauthHelper.getAccessToken(oauthParameters);
+		} catch (OAuthException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+			//resp.sendRedirect("/");
+			resp.getWriter().println("getAccessToken");
+		}    		
+
+		String TOKEN_SECRET = oauthParameters.getOAuthTokenSecret();
+		
+		// 4. Using an access token
+		GoogleOAuthParameters oauthParameters2 = new GoogleOAuthParameters();
+		  oauthParameters2.setOAuthConsumerKey(CONSUMER_KEY);
+		  oauthParameters2.setOAuthConsumerSecret(CONSUMER_SECRET);
+		  oauthParameters2.setOAuthToken(ACCESS_TOKEN);
+		  oauthParameters2.setOAuthTokenSecret(TOKEN_SECRET);
+	
+		//OAUTH DANCE HMAC-SHA1  END
+		  
+		ContactsService client = new ContactsService("referjobs-rfrrljbs-1");
+		try {
+			client.setOAuthCredentials(oauthParameters2, new OAuthHmacSha1Signer());
+		} catch (OAuthException e) {				
+			e.printStackTrace();
+			//resp.sendRedirect("/");
+			resp.getWriter().println("setOAuthCredentials");
+		}
+		
+		URL feedUrl = new URL(CONTACT_FEED_SCOPE + "contacts/" + user.getEmail() + "/full");
+		ContactFeed resultFeed=null;
+		try {
+			resultFeed = client.getFeed(feedUrl, ContactFeed.class);
+		} catch (ServiceException e) {				
+			e.printStackTrace();
+			//resp.sendRedirect("/");
+			resp.getWriter().println("getFeed");
+		}
+		if(resultFeed !=null){
+			
+			UserContacts userContacts = new UserContacts(user);
+			
+			for (int i = 0; i < resultFeed.getEntries().size(); i++) {    		        
+				ContactEntry entry = resultFeed.getEntries().get(i);
+				
+				List<com.google.appengine.api.datastore.Email> userContactsEmail = new ArrayList<com.google.appengine.api.datastore.Email>();
+				
+				for (Email email : entry.getEmailAddresses()) {
+					com.google.appengine.api.datastore.Email gaeDSEmail = new com.google.appengine.api.datastore.Email(email.getAddress());
+					userContactsEmail.add(gaeDSEmail);
+				}
+				userContacts.setUserContacts(userContactsEmail);    				
+	    		
+	    		//Persist to GAE DataStore
+		        PersistenceManager pm = PMF.get().getPersistenceManager();
+		        try {
+		            pm.makePersistent(userContacts);
+		        } finally {
+		            pm.close();
+		        }
+	        } 
+		}
+		resp.sendRedirect("/UserContacts.jsp");
+	}
 }
+		
+	 
+   
+    
