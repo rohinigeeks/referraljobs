@@ -69,13 +69,15 @@ public class GetContactsServlet extends HttpServlet {
 		oauthParameters.setOAuthConsumerKey(CONSUMER_KEY);
 		oauthParameters.setOAuthConsumerSecret(CONSUMER_SECRET);
 		oauthParameters.setScope(CONTACT_FEED_SCOPE);
-		oauthParameters.setOAuthCallback(CALLBACK_URL);
+		//oauthParameters.setOAuthCallback(CALLBACK_URL);
 		
 		
 		GoogleOAuthHelper oauthHelper = new GoogleOAuthHelper(new OAuthHmacSha1Signer());
 		try {
 			
 			oauthHelper.getUnauthorizedRequestToken(oauthParameters);
+			oauthParameters.setOAuthCallback(CALLBACK_URL + "?oauth_token_secret=" + oauthParameters.getOAuthTokenSecret());
+			
 		} catch (OAuthException e) {			
 			e.printStackTrace();
 			resp.sendRedirect("/");
@@ -85,6 +87,7 @@ public class GetContactsServlet extends HttpServlet {
 		// 2. Authorizing a request token
 		String approvalPageUrl = oauthHelper.createUserAuthorizationUrl(oauthParameters);
 		resp.sendRedirect(approvalPageUrl);
+		//resp.getWriter().println(oauthParameters.getOAuthTokenSecret());
 		/*
 		}
 		else {
@@ -103,25 +106,25 @@ public class GetContactsServlet extends HttpServlet {
    
     public void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
     	
-    	try { //resp.getWriter().println(req.getQueryString());
+    	 //resp.getWriter().println(req.getQueryString());
     		
     		
 			UserService userService = UserServiceFactory.getUserService();
 			User user = userService.getCurrentUser();
 			
-			//GoogleOAuthParameters oauthParameters = new GoogleOAuthParameters();
-			//oauthParameters.setOAuthConsumerKey(CONSUMER_KEY);
-			//oauthParameters.setOAuthConsumerSecret(CONSUMER_SECRET);
+			GoogleOAuthParameters oauthParameters = new GoogleOAuthParameters();
+			oauthParameters.setOAuthConsumerKey(CONSUMER_KEY);
+			oauthParameters.setOAuthConsumerSecret(CONSUMER_SECRET);
 
-			//GoogleOAuthHelper oauthHelper = new GoogleOAuthHelper(new OAuthHmacSha1Signer());
-			//oauthHelper.getOAuthParametersFromCallback(req.getQueryString(), oauthParameters);
+			GoogleOAuthHelper oauthHelper = new GoogleOAuthHelper(new OAuthHmacSha1Signer());
+			oauthHelper.getOAuthParametersFromCallback(req.getQueryString(), oauthParameters);
 			
 			   		
 			
 			// 3. Upgrading to an access token
-			/*
+			
 			try {
-				ACCESS_TOKEN = oauthHelper.getAccessToken(oauthParameters);
+				ACCESS_TOKEN = oauthHelper.getAccessToken(req.getQueryString(), oauthParameters);
 			} catch (OAuthException e1) {
 				// TODO Auto-generated catch block
 				e1.printStackTrace();
@@ -130,8 +133,8 @@ public class GetContactsServlet extends HttpServlet {
 			}    		
 
 			TOKEN_SECRET = oauthParameters.getOAuthTokenSecret();
-			*/
-			
+	
+			/*
 			String qs = req.getQueryString();
 			
 			if (!qs.isEmpty()) {
@@ -142,8 +145,8 @@ public class GetContactsServlet extends HttpServlet {
     			ACCESS_TOKEN = accessToken[1];
     			TOKEN_SECRET = tokenSecret[1];
     		} 
-    		
-    		//resp.getWriter().println("ACCESS_TOKEN:" + ACCESS_TOKEN + "<br>" + "TOKEN_SECRET:" + TOKEN_SECRET) ;
+    		*/
+    		resp.getWriter().println("ACCESS_TOKEN:" + ACCESS_TOKEN + "<br>" + "TOKEN_SECRET:" + TOKEN_SECRET) ;
     		
 			
 			// 4. Using an access token
@@ -156,21 +159,25 @@ public class GetContactsServlet extends HttpServlet {
 			//OAUTH DANCE HMAC-SHA1  END
 			
             //[AM01]
-			ContactsService client = new ContactsService("rfrrljbs.appspot.com");
+			ContactsService client = new ContactsService("rohinigeeks-rfrrljbs-1");
 			//[AM01]
 			
 			try {
 				client.setOAuthCredentials(oauthParameters2, new OAuthHmacSha1Signer());
 			} catch (OAuthException e) {				
-				e.printStackTrace();
+				e.printStackTrace(resp.getWriter());
 				//resp.sendRedirect("/");
 				resp.getWriter().println("setOAuthCredentials");
 			}
 			
 			URL feedUrl = new URL(CONTACT_FEED_SCOPE + "contacts/" + user.getEmail() + "/full");
+			
+			//Workaround
+			Query query = new Query(feedUrl);
+			
 			ContactFeed resultFeed=null;
 			try {
-				resultFeed = client.getFeed(feedUrl, ContactFeed.class);
+				resultFeed = client.getFeed(query, ContactFeed.class);
 			} catch (ServiceException e) {				
 				e.printStackTrace();
 				//resp.sendRedirect("/");
@@ -200,14 +207,9 @@ public class GetContactsServlet extends HttpServlet {
 			        }
 			    } 
 			}
-			resp.sendRedirect("/UserContacts.jsp");
+			resp.sendRedirect("/UserContactsUI.jsp");		
 			
-			
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			resp.getWriter().println("<h1>JHAM HAS A NEW NAME</h1>");
-			e.printStackTrace(resp.getWriter());
-		}
+		
 	}
 }
 		
