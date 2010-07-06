@@ -27,6 +27,7 @@ public class UserContacts {
 	@Persistent
 	private User user;
 	
+	@Persistent
 	private List<Email> userContacts;
 	
 	public UserContacts(User user){
