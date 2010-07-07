@@ -207,6 +207,24 @@ public class GetContactsServlet extends HttpServlet {
 			        }
 			    } 
 			}
+			
+			//DEBUG
+			/*
+			PersistenceManager pm = PMF.get().getPersistenceManager();
+			javax.jdo.Query query1 = pm.newQuery(UserContacts.class);
+			           
+			         
+		    List<UserContacts> results = (List<UserContacts>) query1.execute();
+		    if (results.iterator().hasNext()) {
+		    	for (UserContacts uc : results) {
+		    		for (com.google.appengine.api.datastore.Email email : uc.getUserContacts()){
+		    			resp.getWriter().println(email.getEmail());
+		    		}
+		    	}
+		    			
+		    }
+		    */
+		    //DEBUG
 			resp.sendRedirect("/UserContactsUI.jsp");		
 			
 		
