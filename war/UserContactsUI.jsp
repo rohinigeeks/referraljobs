@@ -76,11 +76,11 @@
      //       "where user == userParam " +
        //    "parameters String userParam ");
    Query query = pm.newQuery(UserContacts.class);
-   //query.setFilter("user.equals(userParam)");
-  //query.declareParameters("User userParam");
+   query.setFilter("user.equals(userParam)");
+   query.declareParameters("User userParam");
            
          
-    List<UserContacts> results = (List<UserContacts>) query.execute();
+    List<UserContacts> results = (List<UserContacts>) query.execute(user);
     if (results.iterator().hasNext()) {
     	for (UserContacts uc : results) {
     
@@ -91,7 +91,7 @@
         	<ol id="posts-list" class="hfeed">
         	<% for (com.google.appengine.api.datastore.Email email : uc.getUserContacts()) {%>
         		<li>
-        	 		<%email.toString();%>
+        	 		<%email.getEmail();%>
         	 	</li>
         	<% } %>
         	</ol>
